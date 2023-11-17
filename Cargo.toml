@@ -29,7 +29,7 @@ reqwest = "0.11"
 colored = "2"
 lame = "0.1"
 aspotify = "0.7.1"
-librespot = { git = "https://github.com/librespot-org/librespot.git", rev = "4d402e690c67457ca2d462670db39330bbceb4cf" }
+librespot = { git = "https://github.com/librespot-org/librespot.git", rev = "c491f90e09d6468829f004605fe14121a01c6674" }
 async-std = { version = "1.12", features = ["attributes", "tokio1"] }
 serde_json = "1.0"
 async-stream = "0.3"
