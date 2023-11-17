@@ -15,6 +15,7 @@ build = "build.rs"
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
 
+
 [dependencies]
 clap = "4.2.1"
 log = "0.4"
