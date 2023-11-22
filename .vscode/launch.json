@@ -42,6 +42,20 @@
 			},
 			"args": [],
 			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "Debug Rust executable with LLDB",
+			"type": "lldb",
+			"request": "launch",
+			"program": "/home/chrible/DownOnSpot/target/debug/down_on_spot",
+			"args": [
+				"https://open.spotify.com/track/5FDh0G5oQ2UD9JxWiDCT1x"
+			],
+			"stopOnEntry": false,
+			"cwd": "/home/chrible/DownOnSpot",
+			"sourceLanguages": [
+				"rust"
+			]
 		}
 	]
 }

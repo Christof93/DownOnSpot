@@ -45,8 +45,17 @@ git clone https://github.com/oSumAtrIX/DownOnSpot.git
 cd DownOnSpot
 ```
 
-`Nightly Rust` is required to build this project. Install it by following [rustup.rs](https://rustup.rs) instructions.
+`Nightly Rust` is required to build this project. Also the libmp3lame library. Install all with:
 
+```bash
+sudo apt-get install build-essential libasound2-dev pkg-config libssl-dev libmp3lame-dev
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup toolchain install nightly
+rustup default nightly
+cargo build
+```
+
+To build the version **not** optimized for debugging
 ```bash
 cargo build --release
 ```
