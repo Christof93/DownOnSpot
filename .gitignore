@@ -4,3 +4,5 @@
 
 settings.json
 libmp3lame.dll
+credentials_cache
+Cargo.lock

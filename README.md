@@ -41,12 +41,20 @@ If you want to help me accelerate this process, please feel free to contact me a
 
 1. Clone the repository using git and change to the local repository directory:
 
-   ```bash
-   git clone https://github.com/oSumAtrIX/DownOnSpot.git
-   cd DownOnSpot
-   ```
+`Nightly Rust` is required to build this project. Also the libmp3lame library. Install all with:
 
-2. Install dependencies
+```bash
+sudo apt-get install build-essential libasound2-dev pkg-config libssl-dev libmp3lame-dev
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup toolchain install nightly
+rustup default nightly
+cargo build
+```
+
+To build the version **not** optimized for debugging
+```bash
+cargo build --release
+```
 
    If you are on Linux, make sure you have the `libasound2-dev` package installed.  
    Additionally, you need the [libmp3lame](https://www.rarewares.org/mp3-lame-libraries.php#libmp3lame) library.  
