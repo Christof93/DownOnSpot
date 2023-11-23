@@ -73,9 +73,6 @@ impl Downloader {
 				let mut queue:Vec<Download> = vec![];
 				for id in ids {
 					let uri = format!("spotify:track:{id}");
-					if let Err(e) = self.add_uri(&uri).await {
-						return Err(e);
-					}
 					let uri = Spotify::parse_uri(&uri)?;
 					let item = self.spotify.resolve_uri(&uri).await?;
 					if let SpotifyItem::Track(track) = item {
