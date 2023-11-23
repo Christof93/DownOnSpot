@@ -63,7 +63,7 @@
 			"request": "launch",
 			"program": "/home/chrible/DownOnSpot/target/debug/down_on_spot",
 			"args": [
-				"-f /home/chrible/logs_034300_to_034400.log.txt"
+				"-f /home/chrible/logs_034300_to_034400_reduced.log"
 			],
 			"stopOnEntry": false,
 			"cwd": "/home/chrible/DownOnSpot",
