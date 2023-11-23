@@ -15,6 +15,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use std::fs;
 
 use crate::converter::AudioConverter;
 use crate::error::SpotifyError;
@@ -64,7 +65,31 @@ impl Downloader {
 		&self,
 		input: &str,
 	) -> Result<Option<Vec<SearchResult>>, SpotifyError> {
-		if let Ok(uri) = Spotify::parse_uri(input) {
+		if input.starts_with("-f") || input.starts_with("--file") {
+			if let Some(file_path)=input.split_whitespace().nth(1) {
+				println!("loading tracks from: {}", file_path);
+				let contents = fs::read_to_string(file_path)
+        			.expect("Should have been able to read the file");
+				let ids = contents.lines();
+				let mut queue:Vec<Download> = vec![];
+				for id in ids {
+					let uri = format!("spotify:track:{id}");
+					if let Err(e) = self.add_uri(&uri).await {
+						return Err(e);
+					}
+					let uri = Spotify::parse_uri(&uri)?;
+					let item = self.spotify.resolve_uri(&uri).await?;
+					if let SpotifyItem::Track(track) = item {
+						queue.push(track.into());
+					}
+				}
+				self.add_to_queue_multiple(queue).await;
+				Ok(None)
+			} else {
+				println!("There is no second element");
+				Ok(None)
+			}
+		} else if let Ok(uri) = Spotify::parse_uri(input) {
 			if let Err(e) = self.add_uri(&uri).await {
 				return Err(e);
 			}

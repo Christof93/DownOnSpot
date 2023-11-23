@@ -74,7 +74,7 @@ async fn start() {
 	let args: Vec<String> = env::args().collect();
 	if args.len() <= 1 {
 		println!(
-			"Usage:\n{} (track_url | album_url | playlist_url | artist_url )",
+			"Usage:\n{} (track_url | album_url | playlist_url | artist_url | file_path)",
 			args[0]
 		);
 		return;
