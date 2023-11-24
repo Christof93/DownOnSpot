@@ -2,17 +2,18 @@ use async_std::channel::{bounded, Receiver, Sender};
 use async_stream::try_stream;
 use chrono::NaiveDate;
 use futures::stream::FuturesUnordered;
-use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
+use futures::{pin_mut, select, FutureExt, Stream, StreamExt, Future};
 use librespot::audio::{AudioDecrypt, AudioFile};
 use librespot::core::audio_key::AudioKey;
 use librespot::core::session::Session;
 use librespot::core::spotify_id::SpotifyId;
-use librespot::metadata::audio::AudioFileFormat;
+use librespot::metadata::audio::{AudioFileFormat, AudioFiles};
 use librespot::metadata::{Metadata, Track};
 use sanitize_filename::sanitize;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use std::fs;
@@ -496,15 +497,21 @@ impl DownloaderInternal {
 		Ok(())
 	}
 
-	async fn find_alternative(session: &Session, track: Track) -> Result<Track, SpotifyError> {
-		for alt in track.alternatives.0 {
-			let t = Track::get(&session, &alt).await?;
-			if !t.availability.is_empty() {
-				return Ok(t);
+	//Pin<Box<dyn Future<Output = std::result::Result<rtsp_types::Response<Body>, ClientActionError>> + Send>> 
+	fn find_alternative(session: &Session, track: Track)
+	-> Pin<Box<dyn Future<Output = std::result::Result<AudioFiles, SpotifyError>> + Send +'_>> {
+		async move {
+			for alt in &track.alternatives.0 {
+				let t = Track::get(&session, &alt).await?;
+				if !t.files.is_empty() {
+					return Ok(t.files);
+				}
+				else {
+					return Self::find_alternative(session, t).await;
+				}
 			}
-		}
-
-		return Err(SpotifyError::Unavailable);
+			return Err(SpotifyError::Unavailable);
+		}.boxed()
 	}
 
 	/// Download track by id
@@ -518,25 +525,28 @@ impl DownloaderInternal {
 	) -> Result<(PathBuf, AudioFormat), SpotifyError> {
 		let id = SpotifyId::from_base62(id)?;
 		let track = Track::get(session, &id).await?;
-
+		let track_files: AudioFiles;
 		// TODO: Fallback if unavailable, but no idea how to check if it's available yet
-		//if track.availability.is_empty() {
-		//	track = DownloaderInternal::find_alternative(session, track).await?;
-		//}
+		if track.files.is_empty() {
+			track_files = DownloaderInternal::find_alternative(session, track.clone()).await?;
+		}
+		else {
+			track_files = track.files;
+		}
 
 		// Quality fallback
 		let mut quality = config.quality;
 		let (mut file_id, mut file_format) = (None, None);
 		'outer: loop {
 			for format in quality.get_file_formats() {
-				if let Some(f) = track.files.get(&format) {
+				if let Some(f) = track_files.get(&format) {
 					info!("{} Using {:?} format.", id.to_base62().unwrap(), format);
 					file_id = Some(f);
 					file_format = Some(format);
 					break 'outer;
 				}
 			}
-			// Fallback to worser quality
+			// Fallback to worse quality
 			match quality.fallback() {
 				Some(q) => quality = q,
 				None => break,
