@@ -2,7 +2,7 @@ use async_std::channel::{bounded, Receiver, Sender};
 use async_stream::try_stream;
 use chrono::NaiveDate;
 use futures::stream::FuturesUnordered;
-use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
+use futures::{pin_mut, select, FutureExt, Stream, StreamExt, Future};
 use librespot::audio::{AudioDecrypt, AudioFile};
 use librespot::core::audio_key::AudioKey;
 use librespot::core::session::Session;
@@ -12,6 +12,7 @@ use sanitize_filename::sanitize;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use std::fs;
@@ -528,14 +529,14 @@ impl DownloaderInternal {
 		let (mut file_id, mut file_format) = (None, None);
 		'outer: loop {
 			for format in quality.get_file_formats() {
-				if let Some(f) = track.files.get(&format) {
+				if let Some(f) = track_files.get(&format) {
 					info!("{} Using {:?} format.", id.to_base62().unwrap(), format);
 					file_id = Some(f);
 					file_format = Some(format);
 					break 'outer;
 				}
 			}
-			// Fallback to worser quality
+			// Fallback to worse quality
 			match quality.fallback() {
 				Some(q) => quality = q,
 				None => break,
