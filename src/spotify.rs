@@ -1,13 +1,14 @@
 use aspotify::{
-	Album, Artist, Client, ClientCredentials, ItemType, Playlist, PlaylistItemType, Track,
-	TrackSimplified,
+	Album, AlbumSimplified, Artist, Client, ClientCredentials, ItemType, Playlist, PlaylistItemType, Response, Track, TrackSimplified, TypeAlbum, TypeTrack
 };
 use librespot::core::authentication::Credentials;
 use librespot::core::cache::Cache;
 use librespot::core::config::SessionConfig;
 use librespot::core::session::Session;
+use std::collections::HashMap;
 use std::fmt;
 use std::path::Path;
+use std::time::Duration;
 use url::Url;
 
 use crate::error::SpotifyError;
@@ -78,8 +79,42 @@ impl Spotify {
 		let id = parts[1];
 		match parts[0] {
 			"track" => {
-				let track = self.spotify.tracks().get_track(id, None).await?;
-				Ok(SpotifyItem::Track(track.data))
+				// let track = self.spotify.tracks().get_track(id, None).await?;
+				let album1 = AlbumSimplified {
+					album_type: None,
+					release_date: None,
+					id: None,
+					artists: Vec::new(),
+					release_date_precision: None,
+					available_markets: None,
+					external_urls: HashMap::new(),
+					images: Vec::new(),
+					name: id.into(),
+					restrictions: None,
+					item_type: TypeAlbum,
+				};
+				let track = Track {
+					album: album1,
+					external_ids: HashMap::new(),
+					popularity: 0,
+					artists: Vec::new(),
+					available_markets: Some(Vec::new()),
+					disc_number: 0,
+					duration: Duration::new(2,35),
+					explicit:false,
+					external_urls: HashMap::new(),
+					id: Some(id.into()),
+					is_playable: None,
+					linked_from: None,
+					restrictions: None,
+					name: id.into(),
+					track_number: 0,
+					preview_url:None,
+					item_type: TypeTrack,
+					is_local:false,
+				};
+				// Ok(SpotifyItem::Track(track.data))
+				Ok(SpotifyItem::Track(track))
 			}
 			"playlist" => {
 				let playlist = self.spotify.playlists().get_playlist(id, None).await?;
