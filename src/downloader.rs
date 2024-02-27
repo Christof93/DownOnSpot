@@ -305,77 +305,77 @@ impl DownloaderInternal {
 		config: DownloaderConfig,
 	) -> Result<(), SpotifyError> {
 		// Fetch metadata
-		let track = self
-			.spotify
-			.spotify
-			.tracks()
-			.get_track(&job.track_id, None)
-			.await?
-			.data;
-		let album = self
-			.spotify
-			.spotify
-			.albums()
-			.get_album(&track.album.id.ok_or(SpotifyError::Unavailable)?, None)
-			.await?
-			.data;
+		// let track = self
+		// 	.spotify
+		// 	.spotify
+		// 	.tracks()
+		// 	.get_track(&job.track_id, None)
+		// 	.await?
+		// 	.data;
+		// let album = self
+		// 	.spotify
+		// 	.spotify
+		// 	.albums()
+		// 	.get_album(&track.album.id.ok_or(SpotifyError::Unavailable)?, None)
+		// 	.await?
+		// 	.data;
 
 		let tags: Vec<(&str, String)> = vec![
-			("%title%", sanitize(&track.name)),
-			(
-				"%artist%",
-				sanitize(
-					&track
-						.artists
-						.iter()
-						.map(|a| a.name.as_str())
-						.collect::<Vec<&str>>()
-						.first()
-						.unwrap_or(&""),
-				),
-			),
-			(
-				"%artists%",
-				sanitize(
-					&track
-						.artists
-						.iter()
-						.map(|a| a.name.as_str())
-						.collect::<Vec<&str>>()
-						.join(", "),
-				),
-			),
-			("%track%", track.track_number.to_string()),
-			("%0track%", format!("{:02}", track.track_number)),
-			("%disc%", track.disc_number.to_string()),
-			("%0disc%", format!("{:02}", track.disc_number)),
+			// ("%title%", sanitize(&track.name)),
+			// (
+			// 	"%artist%",
+			// 	sanitize(
+			// 		&track
+			// 			.artists
+			// 			.iter()
+			// 			.map(|a| a.name.as_str())
+			// 			.collect::<Vec<&str>>()
+			// 			.first()
+			// 			.unwrap_or(&""),
+			// 	),
+			// ),
+			// (
+			// 	"%artists%",
+			// 	sanitize(
+			// 		&track
+			// 			.artists
+			// 			.iter()
+			// 			.map(|a| a.name.as_str())
+			// 			.collect::<Vec<&str>>()
+			// 			.join(", "),
+			// 	),
+			// ),
+			// ("%track%", track.track_number.to_string()),
+			// ("%0track%", format!("{:02}", track.track_number)),
+			// ("%disc%", track.disc_number.to_string()),
+			// ("%0disc%", format!("{:02}", track.disc_number)),
 			("%id%", job.track_id.to_string()),
-			("%album%", sanitize(&track.album.name)),
-			(
-				"%albumArtist%",
-				sanitize(
-					&track
-						.album
-						.artists
-						.iter()
-						.map(|a| a.name.as_str())
-						.collect::<Vec<&str>>()
-						.first()
-						.unwrap_or(&""),
-				),
-			),
-			(
-				"%albumArtists%",
-				sanitize(
-					&track
-						.album
-						.artists
-						.iter()
-						.map(|a| a.name.as_str())
-						.collect::<Vec<&str>>()
-						.join(", "),
-				),
-			),
+			// ("%album%", sanitize(&track.album.name)),
+			// (
+			// 	"%albumArtist%",
+			// 	sanitize(
+			// 		&track
+			// 			.album
+			// 			.artists
+			// 			.iter()
+			// 			.map(|a| a.name.as_str())
+			// 			.collect::<Vec<&str>>()
+			// 			.first()
+			// 			.unwrap_or(&""),
+			// 	),
+			// ),
+			// (
+			// 	"%albumArtists%",
+			// 	sanitize(
+			// 		&track
+			// 			.album
+			// 			.artists
+			// 			.iter()
+			// 			.map(|a| a.name.as_str())
+			// 			.collect::<Vec<&str>>()
+			// 			.join(", "),
+			// 	),
+			// ),
 		];
 
 		let mut filename_template = config.filename_template.clone();
@@ -404,47 +404,47 @@ impl DownloaderInternal {
 			.await
 			.ok();
 
-		// Download cover
-		let mut cover = None;
-		if let Some(image) = track.album.images.first() {
-			match DownloaderInternal::download_cover(&image.url).await {
-				Ok(c) => cover = Some(c),
-				Err(e) => warn!("Failed downloading cover! {}", e),
-			}
-		}
+		// // Download cover
+		// let mut cover = None;
+		// if let Some(image) = track.album.images.first() {
+		// 	match DownloaderInternal::download_cover(&image.url).await {
+		// 		Ok(c) => cover = Some(c),
+		// 		Err(e) => warn!("Failed downloading cover! {}", e),
+		// 	}
+		// }
 
-		let tags = vec![
-			(Field::Title, vec![track.name.to_string()]),
-			(Field::Album, vec![track.album.name.to_string()]),
-			(
-				Field::Artist,
-				track
-					.artists
-					.iter()
-					.map(|a| a.name.to_string())
-					.collect::<Vec<String>>(),
-			),
-			(
-				Field::AlbumArtist,
-				track
-					.album
-					.artists
-					.iter()
-					.map(|a| a.name.to_string())
-					.collect::<Vec<String>>(),
-			),
-			(Field::TrackNumber, vec![track.track_number.to_string()]),
-			(Field::DiscNumber, vec![track.disc_number.to_string()]),
-			(Field::Genre, album.genres.clone()),
-			(Field::Label, vec![album.label.to_string()]),
-		];
-		let date = album.release_date;
-		// Write tags
-		let config = config.clone();
-		tokio::task::spawn_blocking(move || {
-			DownloaderInternal::write_tags(path, format, tags, date, cover, config)
-		})
-		.await??;
+		// let tags = vec![
+		// 	(Field::Title, vec![track.name.to_string()]),
+		// 	(Field::Album, vec![track.album.name.to_string()]),
+		// 	(
+		// 		Field::Artist,
+		// 		track
+		// 			.artists
+		// 			.iter()
+		// 			.map(|a| a.name.to_string())
+		// 			.collect::<Vec<String>>(),
+		// 	),
+		// 	(
+		// 		Field::AlbumArtist,
+		// 		track
+		// 			.album
+		// 			.artists
+		// 			.iter()
+		// 			.map(|a| a.name.to_string())
+		// 			.collect::<Vec<String>>(),
+		// 	),
+		// 	(Field::TrackNumber, vec![track.track_number.to_string()]),
+		// 	(Field::DiscNumber, vec![track.disc_number.to_string()]),
+		// 	(Field::Genre, album.genres.clone()),
+		// 	(Field::Label, vec![album.label.to_string()]),
+		// ];
+		// let date = album.release_date;
+		// // Write tags
+		// let config = config.clone();
+		// tokio::task::spawn_blocking(move || {
+		// 	DownloaderInternal::write_tags(path, format, tags, date, cover, config)
+		// })
+		// .await??;
 
 		// Done
 		self.event_tx
