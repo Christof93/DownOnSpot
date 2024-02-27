@@ -70,6 +70,20 @@
 			"sourceLanguages": [
 				"rust"
 			]
+		},
+		{
+			"name": "Debug Rust executable with settings and file",
+			"type": "lldb",
+			"request": "launch",
+			"program": "/home/chrible/DownOnSpot/target/debug/down_on_spot",
+			"args": [
+				"-s /home/chrible/.config/down_on_spot/settings.json -f /home/chrible/logs_034300_to_034400_reduced.log"
+			],
+			"stopOnEntry": false,
+			"cwd": "/home/chrible/DownOnSpot",
+			"sourceLanguages": [
+				"rust"
+			]
 		}
 	]
 }

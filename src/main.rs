@@ -13,6 +13,7 @@ use colored::Colorize;
 use downloader::{DownloadState, Downloader};
 use settings::Settings;
 use spotify::Spotify;
+use std::path::{Path, PathBuf};
 use std::{
 	env,
 	time::{Duration, Instant},
@@ -36,7 +37,29 @@ async fn main() {
 }
 
 async fn start() {
-	let settings = match Settings::load().await {
+	
+	let args: Vec<String> = env::args().collect();
+	if args.len() <= 1 {
+		println!(
+			"Usage:\n{} (track_url | album_url | playlist_url | artist_url | file_path)",
+			args[0]
+		);
+		return;
+	}
+	let mut settings_path: Option<PathBuf>=None;
+	let mut args = args[1..].join(" ");
+	if args.starts_with("-s") || args.starts_with("--settings") {
+		let mut arg_iterator = args.split_whitespace();
+		if let Some(path_str) = arg_iterator.nth(1) {
+			settings_path = Some(Path::new(path_str).to_path_buf());
+			args = arg_iterator.collect::<Vec<&str>>().join(" ");
+		}
+		else {
+			println!("Could not parse settings file from command line argument");
+			return
+		}
+	}
+	let settings = match Settings::load(settings_path).await {
 		Ok(settings) => {
 			println!(
 				"{} {}.",
@@ -71,15 +94,6 @@ async fn start() {
 		}
 	};
 
-	let args: Vec<String> = env::args().collect();
-	if args.len() <= 1 {
-		println!(
-			"Usage:\n{} (track_url | album_url | playlist_url | artist_url | file_path)",
-			args[0]
-		);
-		return;
-	}
-
 	let spotify = match Spotify::new(
 		&settings.username,
 		&settings.password,
@@ -101,9 +115,9 @@ async fn start() {
 			return;
 		}
 	};
-
-	let input = args[1..].join(" ");
-
+	let input: String = args;
+	
+	
 	let downloader = Downloader::new(settings.downloader, spotify);
 	match downloader.handle_input(&input).await {
 		Ok(search_results) => {
