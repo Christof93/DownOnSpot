@@ -68,10 +68,13 @@ impl Settings {
 	}
 
 	// Load config
-	pub async fn load() -> Result<Settings, SpotifyError> {
+	pub async fn load(settings_path: Option<PathBuf>) -> Result<Settings, SpotifyError> {
 		// Get config folder path, generate config file path
-		let config_folder_path = get_config_folder_path();
-		let config_file_path = config_folder_path.join("settings.json");
+		let config_file_path: PathBuf;
+		match settings_path {
+			Some(path) => {config_file_path = path}
+			None => {config_file_path = get_config_folder_path().join("settings.json")}
+		}
 
 		// Deserialize the settings from a json file
 		let mut file = File::open(config_file_path).await?;
