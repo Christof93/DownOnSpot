@@ -1,6 +1,6 @@
 use async_std::channel::{bounded, Receiver, Sender};
 use async_stream::try_stream;
-use chrono::NaiveDate;
+// use chrono::NaiveDate;
 use futures::stream::FuturesUnordered;
 use futures::{pin_mut, select, FutureExt, Stream, StreamExt, Future};
 use librespot::audio::{AudioDecrypt, AudioFile};
@@ -9,7 +9,7 @@ use librespot::core::session::Session;
 use librespot::core::spotify_id::SpotifyId;
 use librespot::metadata::audio::{AudioFileFormat, AudioFiles};
 use librespot::metadata::{Metadata, Track};
-use sanitize_filename::sanitize;
+// use sanitize_filename::sanitize;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -21,7 +21,7 @@ use std::fs;
 use crate::converter::AudioConverter;
 use crate::error::SpotifyError;
 use crate::spotify::{Spotify, SpotifyItem};
-use crate::tag::{Field, TagWrap};
+// use crate::tag::{Field, TagWrap};
 
 /// Wrapper for use with UI
 #[derive(Debug, Clone)]
@@ -389,7 +389,7 @@ impl DownloaderInternal {
 		tokio::fs::create_dir_all(path.parent().unwrap()).await?;
 
 		// Download
-		let (path, format) = DownloaderInternal::download_track(
+		let (_path, _format) = DownloaderInternal::download_track(
 			&self.spotify.session,
 			&job.track_id,
 			path,
@@ -454,48 +454,48 @@ impl DownloaderInternal {
 		Ok(())
 	}
 
-	/// Download cover, returns mime and data
-	async fn download_cover(url: &str) -> Result<(String, Vec<u8>), SpotifyError> {
-		let res = reqwest::get(url).await?;
-		let mime = res
-			.headers()
-			.get("content-type")
-			.ok_or_else(|| SpotifyError::Error("Missing cover mime!".into()))?
-			.to_str()
-			.unwrap()
-			.to_string();
-		let data = res.bytes().await?.to_vec();
-		Ok((mime, data))
-	}
+	// /// Download cover, returns mime and data
+	// async fn download_cover(url: &str) -> Result<(String, Vec<u8>), SpotifyError> {
+	// 	let res = reqwest::get(url).await?;
+	// 	let mime = res
+	// 		.headers()
+	// 		.get("content-type")
+	// 		.ok_or_else(|| SpotifyError::Error("Missing cover mime!".into()))?
+	// 		.to_str()
+	// 		.unwrap()
+	// 		.to_string();
+	// 	let data = res.bytes().await?.to_vec();
+	// 	Ok((mime, data))
+	// }
 
-	/// Write tags to file ( BLOCKING )
-	fn write_tags(
-		path: impl AsRef<Path>,
-		format: AudioFormat,
-		tags: Vec<(Field, Vec<String>)>,
-		date: NaiveDate,
-		cover: Option<(String, Vec<u8>)>,
-		config: DownloaderConfig,
-	) -> Result<(), SpotifyError> {
-		let mut tag_wrap = TagWrap::new(path, format)?;
-		// Format specific
-		if let TagWrap::Id3(id3) = &mut tag_wrap {
-			id3.use_id3_v24(config.id3v24)
-		}
+	// /// Write tags to file ( BLOCKING )
+	// fn write_tags(
+	// 	path: impl AsRef<Path>,
+	// 	format: AudioFormat,
+	// 	tags: Vec<(Field, Vec<String>)>,
+	// 	date: NaiveDate,
+	// 	cover: Option<(String, Vec<u8>)>,
+	// 	config: DownloaderConfig,
+	// ) -> Result<(), SpotifyError> {
+	// 	let mut tag_wrap = TagWrap::new(path, format)?;
+	// 	// Format specific
+	// 	if let TagWrap::Id3(id3) = &mut tag_wrap {
+	// 		id3.use_id3_v24(config.id3v24)
+	// 	}
 
-		let tag = tag_wrap.get_tag();
-		tag.set_separator(&config.separator);
-		for (field, value) in tags {
-			tag.set_field(field, value);
-		}
-		tag.set_release_date(date);
-		// Cover
-		if let Some((mime, data)) = cover {
-			tag.add_cover(&mime, data);
-		}
-		tag.save()?;
-		Ok(())
-	}
+	// 	let tag = tag_wrap.get_tag();
+	// 	tag.set_separator(&config.separator);
+	// 	for (field, value) in tags {
+	// 		tag.set_field(field, value);
+	// 	}
+	// 	tag.set_release_date(date);
+	// 	// Cover
+	// 	if let Some((mime, data)) = cover {
+	// 		tag.add_cover(&mime, data);
+	// 	}
+	// 	tag.save()?;
+	// 	Ok(())
+	// }
 
 	//Pin<Box<dyn Future<Output = std::result::Result<rtsp_types::Response<Body>, ClientActionError>> + Send>> 
 	fn find_alternative(session: &Session, track: Track)

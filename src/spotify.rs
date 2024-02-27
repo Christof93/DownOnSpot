@@ -1,5 +1,5 @@
 use aspotify::{
-	Album, AlbumSimplified, Artist, Client, ClientCredentials, ItemType, Playlist, PlaylistItemType, Response, Track, TrackSimplified, TypeAlbum, TypeTrack
+	Album, AlbumSimplified, Artist, Client, ClientCredentials, ItemType, Playlist, PlaylistItemType, Track, TrackSimplified, TypeAlbum, TypeTrack
 };
 use librespot::core::authentication::Credentials;
 use librespot::core::cache::Cache;
