@@ -7,14 +7,9 @@ use librespot::audio::{AudioDecrypt, AudioFile};
 use librespot::core::audio_key::AudioKey;
 use librespot::core::session::Session;
 use librespot::core::spotify_id::SpotifyId;
-<<<<<<< HEAD
-use librespot::metadata::{FileFormat, Metadata, Track};
-use sanitize_filename::sanitize;
-=======
 use librespot::metadata::audio::{AudioFileFormat, AudioFiles};
 use librespot::metadata::{Metadata, Track};
 // use sanitize_filename::sanitize;
->>>>>>> let some warning disappear
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::path::{Path, PathBuf};

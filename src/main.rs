@@ -190,15 +190,16 @@ async fn start() {
 							DownloadState::Post => {
 								exit_flag &= 0;
 								"Postprocessing... ".to_string()
-							}
-							DownloadState::None | DownloadState::Lock => {
+							},
+							DownloadState::None => {
 								exit_flag &= 0;
 								"Preparing... ".to_string()
-							}
+							},
+							DownloadState::Lock => "Preparing... ".to_string(),
 							DownloadState::Error(e) => {
 								format!("{} ", e)
 							}
-							DownloadState::Done => "Impossible state".to_string(),
+							DownloadState::Done => {"Impossible state".to_string()}
 						};
 					} else {
 						progress = "Done.".to_string();
