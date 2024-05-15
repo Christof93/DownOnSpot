@@ -177,13 +177,13 @@ async fn start() {
 
 					if state != DownloadState::Done {
 						progress = match state {
-							DownloadState::Downloading(r, t) => {
+							DownloadState::Downloading(r, t, e) => {
 								exit_flag &= 0;
 								let p = r as f32 / t as f32 * 100.0;
 								if p > 100.0 {
-									"100%".to_string()
+									format!("{}s {}%", e as u16, 100 as i8)
 								} else {
-									format!("{}%", p as i8)
+									format!("{}s {}%", e as u16, p as i8)
 								}
 							}
 							DownloadState::Post => {

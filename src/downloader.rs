@@ -15,6 +15,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tokio::fs::File;
+use tokio::time::Instant;
 use tokio::io::AsyncWriteExt;
 use std::fs;
 
@@ -539,7 +540,9 @@ impl DownloaderInternal {
 		let id = SpotifyId::from_base62(id)?;
 		let track = Track::get(session, &id).await?;
 		let track_files: AudioFiles;
-		// TODO: Fallback if unavailable, but no idea how to check if it's available yet
+		let now = Instant::now();
+		let mut time_elapsed: u64;
+
 		if track.files.is_empty() {
 			track_files = DownloaderInternal::find_alternative(session, track.clone()).await?;
 		}
@@ -624,13 +627,19 @@ impl DownloaderInternal {
 		while let Some(result) = s.next().await {
 			match result {
 				Ok(r) => {
-					read += r;
-					tx.send(Message::UpdateState(
-						job_id,
-						DownloadState::Downloading(read, size),
-					))
-					.await
-					.ok();
+					time_elapsed = now.elapsed().as_secs();
+					if time_elapsed as u16 >= config.timeout {
+						return Err(SpotifyError::Timeout);
+					}
+					else {
+						read += r;
+						tx.send(Message::UpdateState(
+							job_id,
+							DownloadState::Downloading(read, size, time_elapsed),
+						))
+						.await
+						.ok();
+					}
 				}
 				Err(e) => {
 					tokio::fs::remove_file(path).await.ok();
@@ -888,7 +897,7 @@ impl From<Download> for DownloadJob {
 pub enum DownloadState {
 	None,
 	Lock,
-	Downloading(usize, usize),
+	Downloading(usize, usize, u64),
 	Post,
 	Done,
 	Error(String),
@@ -923,6 +932,7 @@ pub struct DownloaderConfig {
 	pub tmp_path: String,
 	pub filename_template: String,
 	pub tmp_filename_template: String,
+	pub timeout: u16,
 	pub id3v24: bool,
 	pub convert_to_mp3: bool,
 	pub separator: String,
@@ -939,6 +949,7 @@ impl DownloaderConfig {
 			tmp_path: "downloads".to_string(),
 			filename_template: "%artist% - %title%".to_string(),
 			tmp_filename_template: "%artist% - %title%.tmp".to_string(),
+			timeout: 300,
 			id3v24: true,
 			convert_to_mp3: false,
 			separator: ", ".to_string(),
