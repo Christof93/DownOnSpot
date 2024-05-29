@@ -118,7 +118,7 @@ async fn start() {
 	let input: String = args;
 	
 	
-	let downloader = Downloader::new(settings.downloader, spotify);
+	let downloader = Downloader::new(settings.downloader.clone(), spotify);
 	match downloader.handle_input(&input).await {
 		Ok(search_results) => {
 			if let Some(search_results) = search_results {
@@ -210,7 +210,10 @@ async fn start() {
 				if exit_flag == 1 {
 					break 'outer;
 				}
-
+				if time_elapsed as u16 >= settings.downloader.global_timeout {
+					println!("Timed out!");
+					break 'outer;
+				}
 				println!("\nElapsed second(s): {}", time_elapsed);
 				task::sleep(refresh).await
 			}

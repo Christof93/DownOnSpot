@@ -1592,7 +1592,7 @@ dependencies = [
 [[package]]
 name = "librespot"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "env_logger",
  "futures-util",
@@ -1608,6 +1608,7 @@ dependencies = [
  "log",
  "rpassword",
  "sha1",
+ "sysinfo",
  "thiserror",
  "tokio",
  "url",
@@ -1616,7 +1617,7 @@ dependencies = [
 [[package]]
 name = "librespot-audio"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "aes",
  "byteorder",
@@ -1636,7 +1637,7 @@ dependencies = [
 [[package]]
 name = "librespot-connect"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "form_urlencoded",
  "futures-util",
@@ -1656,7 +1657,7 @@ dependencies = [
 [[package]]
 name = "librespot-core"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "aes",
  "base64 0.21.2",
@@ -1707,7 +1708,7 @@ dependencies = [
 [[package]]
 name = "librespot-discovery"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "aes",
  "base64 0.21.2",
@@ -1731,7 +1732,7 @@ dependencies = [
 [[package]]
 name = "librespot-metadata"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "async-trait",
  "byteorder",
@@ -1749,7 +1750,7 @@ dependencies = [
 [[package]]
 name = "librespot-playback"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "byteorder",
  "cpal",
@@ -1772,7 +1773,7 @@ dependencies = [
 [[package]]
 name = "librespot-protocol"
 version = "0.5.0-dev"
-source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
+source = "git+https://github.com/librespot-org/librespot.git?rev=c491f90e09d6468829f004605fe14121a01c6674#c491f90e09d6468829f004605fe14121a01c6674"
 dependencies = [
  "protobuf",
  "protobuf-codegen",
@@ -2426,9 +2427,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.28.2"
+version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ce5e73202a820a31f8a0ee32ada5e21029c81fd9e3ebf668a40832e4219d9d1"
+checksum = "81b9228215d82c7b61490fec1de287136b5de6f5700f6e58ea9ad61a7964ca51"
 dependencies = [
  "memchr",
  "serde",
