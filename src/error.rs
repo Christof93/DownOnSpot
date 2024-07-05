@@ -20,6 +20,7 @@ pub enum SpotifyError {
 	Reqwest(String),
 	InvalidFormat,
 	AlreadyDownloaded,
+	Timeout,
 }
 
 impl std::error::Error for SpotifyError {}
@@ -44,6 +45,7 @@ impl fmt::Display for SpotifyError {
 			SpotifyError::Reqwest(e) => write!(f, "Reqwest Error: {}", e),
 			SpotifyError::InvalidFormat => write!(f, "Invalid Format!"),
 			SpotifyError::AlreadyDownloaded => write!(f, "Already Downloaded"),
+			SpotifyError::Timeout => write!(f, "Timed out!"),
 		}
 	}
 }

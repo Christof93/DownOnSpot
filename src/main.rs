@@ -119,7 +119,7 @@ async fn start() {
 	let input: String = args;
 	
 	
-	let downloader = Downloader::new(settings.downloader, spotify);
+	let downloader = Downloader::new(settings.downloader.clone(), spotify);
 	match downloader.handle_input(&input).await {
 		Ok(search_results) => {
 			if let Some(search_results) = search_results {
@@ -178,28 +178,31 @@ async fn start() {
 
 					if state != DownloadState::Done {
 						progress = match state {
-							DownloadState::Downloading(r, t) => {
+							DownloadState::Downloading(r, t, e) => {
 								exit_flag &= 0;
 								let p = r as f32 / t as f32 * 100.0;
 								if p > 100.0 {
-									"100%".to_string()
+									format!("{}s {}%", e as u16, 100 as i8)
 								} else {
-									format!("{}%", p as i8)
+									format!("{}s {}%", e as u16, p as i8)
 								}
 							}
 							DownloadState::Post => {
 								exit_flag &= 0;
 								"Postprocessing... ".to_string()
-							},
+							}
 							DownloadState::None => {
 								exit_flag &= 0;
 								"Preparing... ".to_string()
-							},
-							DownloadState::Lock => "Preparing... ".to_string(),
+							}
+							DownloadState::Lock => {
+								exit_flag &= 0;
+								"Preparing... ".to_string()
+							}
 							DownloadState::Error(e) => {
 								format!("{} ", e)
 							}
-							DownloadState::Done => {"Impossible state".to_string()}
+							DownloadState::Done => "Impossible state".to_string(),
 						};
 					} else {
 						progress = "Done.".to_string();
@@ -209,6 +212,11 @@ async fn start() {
 				}
 				time_elapsed = now.elapsed().as_secs();
 				if exit_flag == 1 {
+					break 'outer;
+				}
+
+				if time_elapsed as u16 >= settings.downloader.global_timeout {
+					println!("Timed out!");
 					break 'outer;
 				}
 

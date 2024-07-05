@@ -7,14 +7,14 @@ use librespot::audio::{AudioDecrypt, AudioFile};
 use librespot::core::audio_key::AudioKey;
 use librespot::core::session::Session;
 use librespot::core::spotify_id::SpotifyId;
-use librespot::metadata::audio::{AudioFileFormat, AudioFiles};
-use librespot::metadata::{Metadata, Track};
-// use sanitize_filename::sanitize;
+use librespot::metadata::{FileFormat, Metadata, Track};
+use sanitize_filename::sanitize;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use tokio::fs::File;
+use tokio::time::Instant;
 use tokio::io::AsyncWriteExt;
 use std::fs;
 
@@ -378,21 +378,31 @@ impl DownloaderInternal {
 			// ),
 		];
 
-		let mut filename_template = config.filename_template.clone();
-		let mut path_template = config.path.clone();
+		// filename while streaming
+		let mut filename_template = config.tmp_filename_template.clone();
+		let mut path_template = config.tmp_path.clone();
+		// filename upon finish downloading
+		let mut final_filename_template = config.filename_template.clone();
+		let mut final_path_template = config.path.clone();
+		
 		for (tag, value) in tags {
 			filename_template = filename_template.replace(tag, &value);
 			path_template = path_template.replace(tag, &value);
+			final_filename_template = final_filename_template.replace(tag, &value);
+			final_path_template = final_path_template.replace(tag, &value);
 		}
+		let final_path = Path::new(&final_path_template).join(&final_filename_template);
 		let path = Path::new(&path_template).join(&filename_template);
 
 		tokio::fs::create_dir_all(path.parent().unwrap()).await?;
+		tokio::fs::create_dir_all(final_path.parent().unwrap()).await?;
 
 		// Download
-		let (_path, _format) = DownloaderInternal::download_track(
+		let (streaming_path, final_path, _format) = DownloaderInternal::download_track(
 			&self.spotify.session,
 			&job.track_id,
-			path,
+			&path,
+			&final_path,
 			config.clone(),
 			self.event_tx.clone(),
 			job.id,
@@ -403,6 +413,25 @@ impl DownloaderInternal {
 			.send(Message::UpdateState(job.id, DownloadState::Post))
 			.await
 			.ok();
+
+
+		// // rename file 
+		// match tokio::fs::rename(&streaming_path, &final_path).await {
+		// 	Err(error) => panic!("Problem opening the file: {:?} - tmp_path: {:?} - final_path: {:?}", error, streaming_path, final_path),
+		// 	Ok(()) => (),
+		// }
+
+		// copy file to final path
+		match tokio::fs::copy(&streaming_path, &final_path).await {
+			Err(error) => panic!("Problem copying the file: {:?} - tmp_path: {:?} - final_path: {:?}", error, streaming_path, final_path),
+			Ok(x) => (),
+			// x => panic!("Unexpected invalid u64 {:?}", x),
+		}	
+		match tokio::fs::remove_file(&streaming_path).await {
+			Err(error) => panic!("Problem removing the file: {:?} - tmp_path: {:?}", error, streaming_path),
+			Ok(()) => (),
+			// x => panic!("Unexpected invalid u64 {:?}", x),
+		}	
 
 		// // Download cover
 		// let mut cover = None;
@@ -513,12 +542,16 @@ impl DownloaderInternal {
 		session: &Session,
 		id: &str,
 		path: impl AsRef<Path>,
+		final_path: impl AsRef<Path>,
 		config: DownloaderConfig,
 		tx: Sender<Message>,
 		job_id: i64,
-	) -> Result<(PathBuf, AudioFormat), SpotifyError> {
+	) -> Result<(PathBuf, PathBuf, AudioFormat), SpotifyError> {
 		let id = SpotifyId::from_base62(id)?;
 		let mut track = Track::get(session, id).await?;
+
+		let now = Instant::now();
+		let mut time_elapsed: u64;
 
 		// Fallback if unavailable
 		if !track.available {
@@ -530,7 +563,7 @@ impl DownloaderInternal {
 		let (mut file_id, mut file_format) = (None, None);
 		'outer: loop {
 			for format in quality.get_file_formats() {
-				if let Some(f) = track_files.get(&format) {
+				if let Some(f) = track.files.get(&format) {
 					info!("{} Using {:?} format.", id.to_base62().unwrap(), format);
 					file_id = Some(f);
 					file_format = Some(format);
@@ -558,10 +591,21 @@ impl DownloaderInternal {
 				false => audio_format.extension(),
 			}
 		);
+
+		let final_path = format!(
+			"{}.{}",
+			final_path.as_ref().to_str().unwrap(),
+			match config.convert_to_mp3 {
+				true => "mp3".to_string(),
+				false => audio_format.extension(),
+			}
+		);
 		let path = Path::new(&path).to_owned();
+		let final_path = Path::new(&final_path).to_owned();
+
 
 		// Don't download if we are skipping and the path exists.
-		if config.skip_existing && path.is_file() {
+		if config.skip_existing && final_path.is_file() {
 			return Err(SpotifyError::AlreadyDownloaded);
 		}
 
@@ -592,14 +636,21 @@ impl DownloaderInternal {
 		while let Some(result) = s.next().await {
 			match result {
 				Ok(r) => {
-					read += r;
-					tx.send(Message::UpdateState(
-						job_id,
-						DownloadState::Downloading(read, size),
-					))
-					.await
-					.ok();
+					time_elapsed = now.elapsed().as_secs();
+					if time_elapsed as u16 >= config.timeout {
+						return Err(SpotifyError::Timeout);
+					}
+					else {
+						read += r;
+						tx.send(Message::UpdateState(
+							job_id,
+							DownloadState::Downloading(read, size, time_elapsed),
+						))
+						.await
+						.ok();
+					}
 				}
+
 				Err(e) => {
 					tokio::fs::remove_file(path).await.ok();
 					return Err(e);
@@ -608,7 +659,7 @@ impl DownloaderInternal {
 		}
 
 		info!("Done downloading: {}", track.id.to_base62().unwrap());
-		Ok((path, audio_format))
+		Ok((path, final_path, audio_format))
 	}
 
 	fn download_track_stream(
@@ -859,7 +910,7 @@ impl From<Download> for DownloadJob {
 pub enum DownloadState {
 	None,
 	Lock,
-	Downloading(usize, usize),
+	Downloading(usize, usize, u64),
 	Post,
 	Done,
 	Error(String),
@@ -891,7 +942,11 @@ pub struct DownloaderConfig {
 	pub concurrent_downloads: usize,
 	pub quality: Quality,
 	pub path: String,
+	pub tmp_path: String,
 	pub filename_template: String,
+	pub tmp_filename_template: String,
+	pub timeout: u16,
+	pub global_timeout: u16,
 	pub id3v24: bool,
 	pub convert_to_mp3: bool,
 	pub separator: String,
@@ -905,7 +960,11 @@ impl DownloaderConfig {
 			concurrent_downloads: 4,
 			quality: Quality::Q320,
 			path: "downloads".to_string(),
+			tmp_path: "downloads".to_string(),
 			filename_template: "%artist% - %title%".to_string(),
+			tmp_filename_template: "%artist% - %title%.tmp".to_string(),
+			timeout: 300,
+			global_timeout: 1800,
 			id3v24: true,
 			convert_to_mp3: false,
 			separator: ", ".to_string(),
