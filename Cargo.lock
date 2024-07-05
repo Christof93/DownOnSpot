@@ -1655,8 +1655,8 @@ dependencies = [
 
 [[package]]
 name = "librespot"
-version = "0.4.2"
-source = "git+ssh://git@github.com/oSumAtrIX/free-librespot.git#f28fa264528dc85f8f325c18e8461b0f2b43dca1"
+version = "0.5.0-dev"
+source = "git+https://github.com/librespot-org/librespot.git?rev=4d402e690c67457ca2d462670db39330bbceb4cf#4d402e690c67457ca2d462670db39330bbceb4cf"
 dependencies = [
  "base64 0.13.1",
  "env_logger 0.9.3",
