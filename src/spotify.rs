@@ -28,7 +28,8 @@ impl Spotify {
 		client_secret: &str,
 	) -> Result<Spotify, SpotifyError> {
 		// librespot
-		let session_config = SessionConfig::default();
+		let mut session_config = SessionConfig::default();
+		session_config.client_id = client_id.into();
 		let session = Session::new(
 			session_config.clone(),
 			Some(Cache::new(Some(Path::new("credentials_cache")), None, None, None).unwrap())
