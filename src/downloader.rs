@@ -707,7 +707,7 @@ impl DownloaderInternal {
 	) -> impl Stream<Item = Result<usize, SpotifyError>> {
 		try_stream! {
 			let mut file = File::create(path).await?;
-			let mut decrypted = AudioDecrypt::new(key, encrypted);
+			let mut decrypted = AudioDecrypt::new(Some(key), encrypted);
 			// Skip (i guess encrypted shit)
 			let mut skip: [u8; 0xa7] = [0; 0xa7];
 			let decrypted = tokio::task::spawn_blocking(move || {
