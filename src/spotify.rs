@@ -29,17 +29,22 @@ impl Spotify {
 	) -> Result<Spotify, SpotifyError> {
 		// librespot
 		let cache = Cache::new(Some(Path::new("credentials_cache")), None, None, None).unwrap();
+    let mut session_config = SessionConfig::default();  
 		let credentials = match cache.credentials() {
 			Some(creds) => creds,
-			None => Credentials::with_password(username, password),
+			None => {
+        let token_port = 5588;
+		    session_config.client_id = client_id.into();
+			  let access_token: String = librespot::oauth::get_access_token(&session_config.client_id, token_port).into();
+			  Credentials::with_access_token(access_token)
+      }
 		};
 		let (session, _) = Session::connect(
-			SessionConfig::default(),
+			session_config,
 			credentials,
 			Some(cache),
 			true,
-		)
-		.await?;
+		).await?;
 
 		//aspotify
 		let credentials = ClientCredentials {

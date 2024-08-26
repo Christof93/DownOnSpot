@@ -2,21 +2,21 @@ use async_std::channel::{bounded, Receiver, Sender};
 use async_stream::try_stream;
 // use chrono::NaiveDate;
 use futures::stream::FuturesUnordered;
-use futures::{pin_mut, select, FutureExt, Stream, StreamExt, Future};
+use futures::{pin_mut, select, FutureExt, Stream, StreamExt};
 use librespot::audio::{AudioDecrypt, AudioFile};
 use librespot::core::audio_key::AudioKey;
 use librespot::core::session::Session;
 use librespot::core::spotify_id::SpotifyId;
-use librespot::metadata::{FileFormat, Metadata, Track};
-use sanitize_filename::sanitize;
+use librespot::metadata::{Metadata, Track};
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::pin::Pin;
 use tokio::fs::File;
 use tokio::time::Instant;
 use tokio::io::AsyncWriteExt;
 use std::fs;
+use librespot::metadata::audio::file::AudioFileFormat as FileFormat;
+
 
 use crate::converter::AudioConverter;
 use crate::error::SpotifyError;
@@ -527,9 +527,9 @@ impl DownloaderInternal {
 	// }
 
 	async fn find_alternative(session: &Session, track: Track) -> Result<Track, SpotifyError> {
-		for alt in track.alternatives {
+		for alt in track.alternatives.iter() {
 			let t = Track::get(session, alt).await?;
-			if t.available {
+			if t.files.len() > 0 {
 				return Ok(t);
 			}
 		}
@@ -548,13 +548,13 @@ impl DownloaderInternal {
 		job_id: i64,
 	) -> Result<(PathBuf, PathBuf, AudioFormat), SpotifyError> {
 		let id = SpotifyId::from_base62(id)?;
-		let mut track = Track::get(session, id).await?;
+		let mut track = Track::get(session, &id).await?;
 
 		let now = Instant::now();
 		let mut time_elapsed: u64;
 
 		// Fallback if unavailable
-		if !track.available {
+		if track.files.len() == 0 {
 			track = DownloaderInternal::find_alternative(session, track).await?;
 		}
 
@@ -612,8 +612,8 @@ impl DownloaderInternal {
 		let path_clone = path.clone();
 
 		let key = session.audio_key().request(track.id, *file_id).await?;
-		let encrypted = AudioFile::open(session, *file_id, 1024 * 1024, true).await?;
-		let size = encrypted.get_stream_loader_controller().len();
+		let encrypted = AudioFile::open(session, *file_id, 1024 * 1024).await?;
+		let size = encrypted.get_stream_loader_controller()?.len();
 		// Download
 		let s = match config.convert_to_mp3 {
 			true => {
@@ -669,7 +669,7 @@ impl DownloaderInternal {
 	) -> impl Stream<Item = Result<usize, SpotifyError>> {
 		try_stream! {
 			let mut file = File::create(path).await?;
-			let mut decrypted = AudioDecrypt::new(key, encrypted);
+			let mut decrypted = AudioDecrypt::new(Some(key), encrypted);
 			// Skip (i guess encrypted shit)
 			let mut skip: [u8; 0xa7] = [0; 0xa7];
 			let mut decrypted = tokio::task::spawn_blocking(move || {
@@ -707,7 +707,7 @@ impl DownloaderInternal {
 	) -> impl Stream<Item = Result<usize, SpotifyError>> {
 		try_stream! {
 			let mut file = File::create(path).await?;
-			let mut decrypted = AudioDecrypt::new(key, encrypted);
+			let mut decrypted = AudioDecrypt::new(Some(key), encrypted);
 			// Skip (i guess encrypted shit)
 			let mut skip: [u8; 0xa7] = [0; 0xa7];
 			let decrypted = tokio::task::spawn_blocking(move || {
@@ -776,12 +776,15 @@ impl From<FileFormat> for AudioFormat {
 			FileFormat::MP3_160 => Self::Mp3,
 			FileFormat::MP3_96 => Self::Mp3,
 			FileFormat::MP3_160_ENC => Self::Mp3,
-			FileFormat::MP4_128_DUAL => Self::Mp4,
-			FileFormat::OTHER3 => Self::Unknown,
-			FileFormat::AAC_160 => Self::Aac,
-			FileFormat::AAC_320 => Self::Aac,
-			FileFormat::MP4_128 => Self::Mp4,
-			FileFormat::OTHER5 => Self::Unknown,
+			FileFormat::AAC_24 => Self::Aac,
+			FileFormat::AAC_48 => Self::Aac,
+			FileFormat::FLAC_FLAC => Self::Unknown,
+			// FileFormat::MP4_128_DUAL => Self::Mp4,
+			// FileFormat::OTHER3 => Self::Unknown,
+			// FileFormat::AAC_160 => Self::Aac,
+			// FileFormat::AAC_320 => Self::Aac,
+			// FileFormat::MP4_128 => Self::Mp4,
+			// FileFormat::OTHER5 => Self::Unknown,
 		}
 	}
 }
@@ -792,13 +795,13 @@ impl Quality {
 		match self {
 			Self::Q320 => vec![
 				FileFormat::OGG_VORBIS_320,
-				FileFormat::AAC_320,
+				// FileFormat::AAC_320,
 				FileFormat::MP3_320,
 			],
 			Self::Q256 => vec![FileFormat::MP3_256],
 			Self::Q160 => vec![
 				FileFormat::OGG_VORBIS_160,
-				FileFormat::AAC_160,
+				// FileFormat::AAC_160,
 				FileFormat::MP3_160,
 			],
 			Self::Q96 => vec![FileFormat::OGG_VORBIS_96, FileFormat::MP3_96],

@@ -73,6 +73,8 @@ impl From<librespot::core::session::SessionError> for SpotifyError {
 			librespot::core::session::SessionError::AuthenticationError(_) => {
 				SpotifyError::AuthenticationError
 			}
+			librespot::core::session::SessionError::NotConnected => e.into(),
+			librespot::core::session::SessionError::Packet(_) => e.into(),
 		}
 	}
 }
@@ -80,6 +82,12 @@ impl From<librespot::core::session::SessionError> for SpotifyError {
 impl From<librespot::core::spotify_id::SpotifyIdError> for SpotifyError {
 	fn from(_: librespot::core::spotify_id::SpotifyIdError) -> Self {
 		Self::SpotifyIdError
+	}
+}
+
+impl From<librespot::core::Error> for SpotifyError {
+	fn from(e: librespot::core::Error) -> Self {
+		Self::Error(e.to_string())
 	}
 }
 
