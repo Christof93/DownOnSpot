@@ -39,21 +39,24 @@ impl Spotify {
 			None => {
         		let token_port = 5588;
 		    	session_config.client_id = client_id.into();
-			  	let access_token: String = librespot::oauth::get_access_token(&session_config.client_id, token_port).into();
-			  	Credentials::with_access_token(access_token)
+				let scopes = vec!["streaming"];
+			  	let access_token: String = librespot::oauth::get_access_token(&session_config.client_id, scopes, Some(token_port))?.access_token;
+				Credentials::with_access_token(access_token)
+				// panic!("CACHE NOT ANYMORE VALID: REGENERATING credentials...")
       		}
 		};
-		session.connect(
-			credentials,
+
+		let _sess = session.connect(
+			credentials.clone(),
 			true,
-		).await?;
+		).await;
 
 		//aspotify
-		let credentials = ClientCredentials {
+		let client_credentials = ClientCredentials {
 			id: client_id.to_string(),
 			secret: client_secret.to_string(),
 		};
-		let spotify = Client::new(credentials);
+		let spotify = Client::new(client_credentials);
 
 		Ok(Spotify { session, spotify })
 	}

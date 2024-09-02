@@ -66,6 +66,12 @@ impl From<librespot::core::mercury::MercuryError> for SpotifyError {
 	}
 }
 
+impl From<librespot::oauth::OAuthError> for SpotifyError {
+	fn from(_: librespot::oauth::OAuthError) -> Self {
+		Self::AuthenticationError
+	}
+}
+
 impl From<librespot::core::session::SessionError> for SpotifyError {
 	fn from(e: librespot::core::session::SessionError) -> Self {
 		match e {
