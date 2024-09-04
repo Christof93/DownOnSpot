@@ -166,7 +166,7 @@ async fn start() {
 			let refresh = Duration::from_secs(settings.refresh_ui_seconds);
 			let now = Instant::now();
 			let mut time_elapsed: u64;
-
+			let mut exit_status: i32 = 0;
 			'outer: loop {
 				print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
 				let mut exit_flag: i8 = 1;
@@ -199,7 +199,14 @@ async fn start() {
 								exit_flag &= 0;
 								"Preparing... ".to_string()
 							}
+							DownloadState::AlreadyDownloaded => {
+								"Already Downloaded! ".to_string()
+							}
+							DownloadState::Unavailable => {
+								"Unavailable! ".to_string()
+							}
 							DownloadState::Error(e) => {
+								exit_status = exit_status + 1;
 								format!("{} ", e)
 							}
 							DownloadState::Done => "Impossible state".to_string(),
@@ -224,6 +231,7 @@ async fn start() {
 				task::sleep(refresh).await
 			}
 			println!("Finished download(s) in {} second(s).", time_elapsed);
+			std::process::exit(exit_status)
 		}
 		Err(e) => {
 			error!("{} {}", "Handling input failed:".red(), e)

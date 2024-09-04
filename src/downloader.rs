@@ -287,13 +287,31 @@ impl DownloaderInternal {
 			Ok(_) => {}
 			Err(e) => {
 				error!("Download job for track {} failed. {}", track_id, e);
-				self.event_tx
-					.send(Message::UpdateState(
-						id,
-						DownloadState::Error(e.to_string()),
-					))
-					.await
-					.unwrap();
+				if e.to_string() == "Service unavailable { audio key error }" {
+					self.event_tx
+							.send(Message::UpdateState(
+								id,
+								DownloadState::Unavailable,
+							))
+							.await
+							.unwrap();					
+				}else if e.to_string() == "Already Downloaded" {
+					self.event_tx
+							.send(Message::UpdateState(
+								id,
+								DownloadState::AlreadyDownloaded,
+							))
+							.await
+							.unwrap();
+				}else{
+					self.event_tx
+						.send(Message::UpdateState(
+							id,
+							DownloadState::Error(e.to_string()),
+						))
+						.await
+						.unwrap();
+				}
 			}
 		}
 	}
@@ -916,6 +934,8 @@ pub enum DownloadState {
 	Downloading(usize, usize, u64),
 	Post,
 	Done,
+	Unavailable,
+	AlreadyDownloaded,
 	Error(String),
 }
 
