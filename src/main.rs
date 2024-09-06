@@ -205,6 +205,9 @@ async fn start() {
 							DownloadState::Unavailable => {
 								"Unavailable! ".to_string()
 							}
+							DownloadState::TrackUnavailable => {
+								"Track Unavailable! ".to_string()
+							}
 							DownloadState::Error(e) => {
 								exit_status = exit_status + 1;
 								format!("{} ", e)

@@ -289,28 +289,28 @@ impl DownloaderInternal {
 				error!("Download job for track {} failed. {}", track_id, e);
 				if e.to_string() == "Service unavailable { audio key error }" {
 					self.event_tx
-							.send(Message::UpdateState(
-								id,
-								DownloadState::Unavailable,
-							))
-							.await
-							.unwrap();					
+						.send(Message::UpdateState(
+							id,
+							DownloadState::Unavailable,
+						))
+						.await
+						.unwrap();					
 				}else if e.to_string() == "Already Downloaded" {
 					self.event_tx
-							.send(Message::UpdateState(
-								id,
-								DownloadState::AlreadyDownloaded,
-							))
-							.await
-							.unwrap();
-				}else if e.to_string() == "Unavailable" {
+						.send(Message::UpdateState(
+							id,
+							DownloadState::AlreadyDownloaded,
+						))
+						.await
+						.unwrap();
+				}else if e.to_string() == "Unavailable!" {
 					self.event_tx
-							.send(Message::UpdateState(
-								id,
-								DownloadState::Unavailable,
-							))
-							.await
-							.unwrap();
+						.send(Message::UpdateState(
+							id,
+							DownloadState::TrackUnavailable,
+						))
+						.await
+						.unwrap();
 				}else{
 					self.event_tx
 						.send(Message::UpdateState(
@@ -605,6 +605,8 @@ impl DownloaderInternal {
 		}
 
 		let file_id = file_id.ok_or(SpotifyError::Unavailable)?;
+		// return Err(SpotifyError::Unavailable);
+		// let file_id = file_id.ok_or(DownloadState::TrackUnavailable)?;
 		let file_format = file_format.unwrap();
 
 		// Path with extension
@@ -944,6 +946,7 @@ pub enum DownloadState {
 	Done,
 	Unavailable,
 	AlreadyDownloaded,
+	TrackUnavailable,
 	Error(String),
 }
 
@@ -989,15 +992,15 @@ impl DownloaderConfig {
 	pub fn new() -> DownloaderConfig {
 		DownloaderConfig {
 			concurrent_downloads: 4,
-			quality: Quality::Q320,
+			quality: Quality::Q160,
 			path: "downloads".to_string(),
 			tmp_path: "downloads".to_string(),
 			filename_template: "%artist% - %title%".to_string(),
 			tmp_filename_template: "%artist% - %title%.tmp".to_string(),
-			timeout: 300,
+			timeout: 600,
 			global_timeout: 1800,
 			id3v24: true,
-			convert_to_mp3: false,
+			convert_to_mp3: true,
 			separator: ", ".to_string(),
 			skip_existing: true,
 		}
