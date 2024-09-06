@@ -303,6 +303,14 @@ impl DownloaderInternal {
 							))
 							.await
 							.unwrap();
+				}else if e.to_string() == "Unavailable" {
+					self.event_tx
+							.send(Message::UpdateState(
+								id,
+								DownloadState::Unavailable,
+							))
+							.await
+							.unwrap();
 				}else{
 					self.event_tx
 						.send(Message::UpdateState(
